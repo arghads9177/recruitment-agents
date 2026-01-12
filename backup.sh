@@ -4,7 +4,7 @@ REPO_PATH="/root/recruitment-agents"
 
 # 1. Update the repo (pull latest)
 cd $REPO_PATH
-git pull origin main
+git pull origin master
 
 # 2. Run the export script, targeting the specific folder inside the repo
 # Note: You might need to tweak the OUTPUT_DIR in the JS script or move files after export.
@@ -19,4 +19,4 @@ rsync -av --delete ./backups/recruitment_agents/ $REPO_PATH/workflows/
 cd $REPO_PATH
 git add .
 git commit -m "Update workflows"
-git push origin main
+git push origin master
