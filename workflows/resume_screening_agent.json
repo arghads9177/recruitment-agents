@@ -1,0 +1,1479 @@
+{
+  "updatedAt": "2026-01-12T17:31:01.636Z",
+  "createdAt": "2026-01-09T09:00:14.656Z",
+  "id": "Yz7IPfS0HoAEHwUj",
+  "name": "resume-screening-agent",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1tEONuWJRWa64DL2me7JxPDRvi22Lns16RiKkr7zV5Vw",
+          "mode": "list",
+          "cachedResultName": "Job_Openings_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tEONuWJRWa64DL2me7JxPDRvi22Lns16RiKkr7zV5Vw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tEONuWJRWa64DL2me7JxPDRvi22Lns16RiKkr7zV5Vw/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Job_Title",
+              "lookupValue": "={{ $('Receive Application').item.json.body.job_role }}"
+            },
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "Active"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -336,
+        -352
+      ],
+      "id": "66bbb32e-d1bd-4e28-ade5-6d0d742c8a24",
+      "name": "Fetch Job Description",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YyW1gcId8nYqGi8s",
+          "name": "Google Sheets adeysarkar77"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "resume",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -576,
+        -352
+      ],
+      "id": "44dafc96-d3d9-4ae2-ac02-990793f82297",
+      "name": "Extraxt Text from Resume"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=You are an expert Technical Recruiter with 20 years of experience. You evaluate candidates using \"Semantic Matching\" rather than simple \"Keyword Matching.\"\n\nYOUR TASK:\nAnalyze the provided RESUME text against the JOB DESCRIPTION (JD) to extract candidate details and calculate a precise **ATS Compatibility Score (0-100)**.\n\nJOB DESCRIPTION:\n\"\"\"\n{{ $json.Job_Description }}\n\"\"\"\n\nRESUME TEXT:\n\"\"\"\n{{ $('Extraxt Text from Resume').item.json.text }}\n\"\"\"\n\nSCORING GUIDELINES (Total 100):\n1. **Technical Skills (45 Points):**\n   - **Crucial:** Look for *component skills* even if the exact acronym is missing.\n   - *Example:* If JD asks for \"MEAN Stack\", and Resume lists \"MongoDB\", \"Express\", \"Angular\", and \"Node.js\" separately -> **Award Full Points**.\n   - *Example:* If JD asks for \".NET Core\" and Resume has \".NET Framework\" -> **Award Partial Points** (do not zero out).\n2. **Experience & Seniority (30 Points):**\n   - Compare \"Years of Experience\" vs \"Required Years\". (Allow a 10% margin).\n   - Does the candidate show the required seniority (e.g., Leading teams, Architecture)?\n3. **Nice-to-Haves & Tools (15 Points):**\n   - Look for secondary tools mentioned in the JD (e.g., AWS, Git, Jira/ADO).\n4. **Soft Skills & Formatting (10 Points):**\n   - Communication skills, clear structure, Agile methodologies.\n\nOUTPUT FORMAT:\nReturn ONLY a raw JSON object. Do not use Markdown formatting (no ```json).\n{\n  \"candidate_name\": \"Name extracted from resume\",\n  \"email\": \"Extracted email address\",\n  \"phone\": \"Extracted phone number\",\n  \"location\": \"City, State, or Country extracted from resume\",\n  \"ats_score\": 0,\n  \"summary\": \"1 sentence executive summary of the candidate\",\n  \"missing_skills\": [\"List only truly missing skills\"],\n  \"reasoning\": \"Explain the score calculation. Explicitly mention if you found synonyms (e.g., 'Found Angular+Node instead of MEAN').\"\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "textFormat": {
+            "textOptions": {
+              "type": "json_object"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        80,
+        -352
+      ],
+      "id": "b2f001e9-0402-43e0-a499-d2c16d163bbb",
+      "name": "Screen Resume",
+      "credentials": {
+        "openAiApi": {
+          "id": "JowygiMoSY8l1sx0",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// --- CONFIGURATION ---\nconst CUTOFF_SCORE = 70;\n// ---------------------\n\nconst allowedKeys = [\n  \"candidate_name\",\n  \"email\",\n  \"phone\",\n  \"location\",\n  \"ats_score\",\n  \"status\",\n  \"summary\",\n  \"missing_skills\",\n  \"reasoning\",\n];\n\nfor (const item of $input.all()) {\n  let aiData = {};\n  // 1. NAVIGATE TO THE CORRECT DATA PATH\n  // Based on your screenshot, the data is at: content -> content[0] -> text\n  try {\n    if (\n      item.json.output &&\n      item.json.output.length > 0 &&\n      item.json.output[0].content &&\n      item.json.output[0].content.length > 0 &&\n      item.json.output[0].content[0] &&\n      item.json.output[0].content[0].text\n    ) {\n      aiData = item.json.output[0].content[0].text;\n    }\n    // Fallback: Check if it's directly at the root (just in case)\n    else if (item.json.ats_score !== undefined) {\n      aiData = item.json;\n    }\n  } catch (error) {\n    aiData = { reasoning: \"Error navigating JSON structure: \" + error.message };\n  }\n\n  // 2. CALCULATE STATUS\n  // Use '0' if score is missing\n  const score = aiData.ats_score || 0;\n\n  if (score >= CUTOFF_SCORE) {\n    aiData.status = \"Qualified\";\n  } else {\n    aiData.status = \"Rejected\";\n  }\n\n  // 3. FILTER & REBUILD OUTPUT\n  const filteredJson = {};\n  for (const key of allowedKeys) {\n    // Check aiData (the found object), not item.json\n    if (aiData.hasOwnProperty(key)) {\n      filteredJson[key] = aiData[key];\n    } else {\n      filteredJson[key] = null;\n    }\n  }\n\n  // 4. Generate Unique ID\n  // Generate a simple random ID (e.g., Applicant_8392)\n  const uniqueId = \"Applicant_\" + Math.floor(Math.random() * 10000);\n  filteredJson[\"Unique_Id\"] = uniqueId\n\n  // Update the item\n  item.json = filteredJson;\n}\n\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        -352
+      ],
+      "id": "357c4b71-a3e4-440b-8cf1-9bf3437cef8e",
+      "name": "Set Status"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "dbe68093-b383-43f6-9efc-8f4af181805a",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "Qualified",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        768,
+        -352
+      ],
+      "id": "a28de7f6-63b0-4104-835e-ce2ca2d10196",
+      "name": "Qualification Router"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1VX-DANXMHnMT-VPwzPJ1EJ2huS-HAUr7ew5PlN308DQ",
+          "mode": "list",
+          "cachedResultName": "Candidates_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VX-DANXMHnMT-VPwzPJ1EJ2huS-HAUr7ew5PlN308DQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VX-DANXMHnMT-VPwzPJ1EJ2huS-HAUr7ew5PlN308DQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Unique_Id": "={{ $('Merge').item.json.Unique_Id }}",
+            "Timestamp": "={{ $now.format('yyyy-MM-dd hh:mm a') }}",
+            "Candidate_Name": "={{ $('Merge').item.json.candidate_name }}",
+            "Applied_For": "={{ $('Fetch Job Description').item.json.Job_Title }}",
+            "Email": "={{ $('Merge').item.json.email }}",
+            "Phone": "={{ $('Merge').item.json.phone }}",
+            "Location": "={{ $('Merge').item.json.location }}",
+            "Resume_Summary": "={{ $('Merge').item.json.summary }}",
+            "ATS_Score": "={{ $('Merge').item.json.ats_score }}",
+            "Screening_Status": "={{ $('Merge').item.json.status }}",
+            "AI_Analysis": "={{ $('Merge').item.json.reasoning }}",
+            "Resume_Link": "={{ $json.webViewLink }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Unique_Id",
+              "displayName": "Unique_Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Candidate_Name",
+              "displayName": "Candidate_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Applied_For",
+              "displayName": "Applied_For",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Resume_Summary",
+              "displayName": "Resume_Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ATS_Score",
+              "displayName": "ATS_Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Screening_Status",
+              "displayName": "Screening_Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI_Analysis",
+              "displayName": "AI_Analysis",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Resume_Link",
+              "displayName": "Resume_Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        592,
+        48
+      ],
+      "id": "8d95a805-cd4f-4942-84ad-8ab2f8fda85c",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YyW1gcId8nYqGi8s",
+          "name": "Google Sheets adeysarkar77"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -352,
+        48
+      ],
+      "id": "4ae926b2-87e0-4b86-8b90-589d5c96c9f5",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "resume",
+        "name": "={{ $json.Unique_Id }}.pdf",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "16zpxlDqxzxLUGTgm3Mf14d7NtpDKdriO",
+          "mode": "list",
+          "cachedResultName": "qualified_resume",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/16zpxlDqxzxLUGTgm3Mf14d7NtpDKdriO"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        144,
+        48
+      ],
+      "id": "5d72ed50-cb38-42f1-beb4-eea7776dc845",
+      "name": "Upload Resume",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "kYo9GOt5Ay7Vq313",
+          "name": "Google Drive account adeysarkar77"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 📥 Intake & Preparation\n**1. Job Application Portal:**\n   - Accepts Candidate Resume (PDF).\n   - Captures Selected Job Role.\n\n**2. Data Extraction:**\n   - Converts PDF binary to text.\n   - Fetches the exact Job Description from the DB for comparison.",
+        "height": 384,
+        "width": 816,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -912,
+        -592
+      ],
+      "typeVersion": 1,
+      "id": "47cc32b9-435d-4d25-a4de-0c235dff7dbb",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## 🧠 AI Screening Engine\n**1. Analysis (GPT-4o / Gemini):**\n   - Performs semantic matching.\n   - Extracts Name, Email, Phone, Location.\n   - Calculates ATS Score (0-100).\n\n**2. Standardization:**\n   - Cleans JSON output.\n   - Applies Cutoff Logic (Score >= 70).\n   - Assigns final status: `Qualified` or `Rejected`.",
+        "height": 384,
+        "width": 688,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -80,
+        -592
+      ],
+      "typeVersion": 1,
+      "id": "dc97f67f-4235-418d-9ab4-1e1b1226520a",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## 🔀 Decision Logic\n**Router:**\n   - **True Path:** Candidate is Qualified. Proceed to scheduling.\n   - **False Path:** Candidate is Rejected. Proceed to rejection email (future step).",
+        "height": 384,
+        "width": 400,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        624,
+        -592
+      ],
+      "typeVersion": 1,
+      "id": "c04bcd3f-c3b7-4769-8526-d43c556340c4",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## 💾 Database Operations\n**1. File Storage:**\n   - Uploads the original PDF Resume to Google Drive.\n\n**2. Candidate Logging:**\n   - Appends all extracted data + ATS Score + Status to the `Candidates_DB` Google Sheet.",
+        "height": 368,
+        "width": 1232,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -384,
+        -144
+      ],
+      "typeVersion": 1,
+      "id": "81b1d943-4578-49aa-ad2b-65b5f5c5e48a",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "apply",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -848,
+        -352
+      ],
+      "id": "7b1acbd5-5d23-4959-b762-44acab701b9b",
+      "name": "Receive Application",
+      "webhookId": "6e8e4a41-2587-4556-8b62-026b8334cdb3"
+    },
+    {
+      "parameters": {
+        "path": "get-jobs",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -688,
+        496
+      ],
+      "id": "351b0769-234f-4809-8837-a8a5f9440e78",
+      "name": "Job Role Request",
+      "webhookId": "a6d6f24e-09c9-44c3-9142-13cfe8bd5145"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1tEONuWJRWa64DL2me7JxPDRvi22Lns16RiKkr7zV5Vw",
+          "mode": "list",
+          "cachedResultName": "Job_Openings_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tEONuWJRWa64DL2me7JxPDRvi22Lns16RiKkr7zV5Vw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tEONuWJRWa64DL2me7JxPDRvi22Lns16RiKkr7zV5Vw/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "Active"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -480,
+        496
+      ],
+      "id": "22c8096b-2e1d-4156-825f-680e7a90ca63",
+      "name": "Geat Active Jobs",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YyW1gcId8nYqGi8s",
+          "name": "Google Sheets adeysarkar77"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract just the Job Titles into a simple array\nconst roles = $input.all().map(item => item.json.Job_Title);\n\n// Return it as a JSON object\nreturn { json: { roles: roles } };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -272,
+        496
+      ],
+      "id": "b80fae9f-b322-4b4d-8b85-6bb14738d10e",
+      "name": "The Cleaner"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -64,
+        496
+      ],
+      "id": "a0ee0a8a-768a-497a-a86c-682ef6ea48cb",
+      "name": "Sens Job Roles"
+    }
+  ],
+  "connections": {
+    "Fetch Job Description": {
+      "main": [
+        [
+          {
+            "node": "Screen Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraxt Text from Resume": {
+      "main": [
+        [
+          {
+            "node": "Fetch Job Description",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Screen Resume": {
+      "main": [
+        [
+          {
+            "node": "Set Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Status": {
+      "main": [
+        [
+          {
+            "node": "Qualification Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qualification Router": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Upload Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Resume": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receive Application": {
+      "main": [
+        [
+          {
+            "node": "Extraxt Text from Resume",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Job Role Request": {
+      "main": [
+        [
+          {
+            "node": "Geat Active Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Geat Active Jobs": {
+      "main": [
+        [
+          {
+            "node": "The Cleaner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "The Cleaner": {
+      "main": [
+        [
+          {
+            "node": "Sens Job Roles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "ZSybw5zEIh4mKKQ5"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {
+    "Receive Application": [
+      {
+        "json": {
+          "headers": {
+            "connection": "upgrade",
+            "host": "n8n.myaastha.in",
+            "x-real-ip": "49.37.49.75",
+            "x-forwarded-for": "49.37.49.75",
+            "x-forwarded-proto": "https",
+            "content-length": "102311",
+            "sec-ch-ua-platform": "\"Linux\"",
+            "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+            "sec-ch-ua": "\"Google Chrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+            "content-type": "multipart/form-data; boundary=----WebKitFormBoundaryCvIjAWd5r2sK1f9x",
+            "sec-ch-ua-mobile": "?0",
+            "accept": "*/*",
+            "origin": "http://127.0.0.1:5500",
+            "sec-fetch-site": "cross-site",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-dest": "empty",
+            "referer": "http://127.0.0.1:5500/",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "en-US,en;q=0.9"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "job_role": "Artificial Intelligence Engineer"
+          },
+          "webhookUrl": "https://n8n.myaastha.in/webhook/apply",
+          "executionMode": "production"
+        },
+        "binary": {
+          "resume": {
+            "mimeType": "application/pdf",
+            "fileType": "pdf",
+            "fileExtension": "pdf",
+            "data": "filesystem-v2",
+            "fileName": "Argha Resume.pdf",
+            "id": "filesystem-v2:workflows/Yz7IPfS0HoAEHwUj/executions/temp/binary_data/2fbedd89-3c18-4cf5-912c-ac99d86b33ae",
+            "fileSize": "102 kB"
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "versionId": "bff9ba75-a165-4bec-a189-f5218e5e14cd",
+  "activeVersionId": "bff9ba75-a165-4bec-a189-f5218e5e14cd",
+  "versionCounter": 48,
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2026-01-09T09:00:14.670Z",
+      "createdAt": "2026-01-09T09:00:14.670Z",
+      "role": "workflow:owner",
+      "workflowId": "Yz7IPfS0HoAEHwUj",
+      "projectId": "nPULQSgjz9YKHEZ2",
+      "project": {
+        "updatedAt": "2025-05-25T07:44:53.966Z",
+        "createdAt": "2025-05-25T07:38:19.017Z",
+        "id": "nPULQSgjz9YKHEZ2",
+        "name": "Argha Dey Sarkar <email2argha@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "efbcfcc6-1d00-4a8e-ae51-9e0e1b58d7e9",
+        "projectRelations": [
+          {
+            "updatedAt": "2025-05-25T07:38:19.017Z",
+            "createdAt": "2025-05-25T07:38:19.017Z",
+            "userId": "efbcfcc6-1d00-4a8e-ae51-9e0e1b58d7e9",
+            "projectId": "nPULQSgjz9YKHEZ2",
+            "user": {
+              "updatedAt": "2026-01-12T04:00:24.000Z",
+              "createdAt": "2025-05-25T07:38:18.466Z",
+              "id": "efbcfcc6-1d00-4a8e-ae51-9e0e1b58d7e9",
+              "email": "email2argha@gmail.com",
+              "firstName": "Argha",
+              "lastName": "Dey Sarkar",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-05-25T07:46:43.781Z",
+                "personalization_survey_n8n_version": "1.93.0",
+                "automationGoalDevops": [
+                  "monitoring-alerting",
+                  "cloud-infrastructure-orchestration"
+                ],
+                "companyIndustryExtended": [
+                  "it-industry"
+                ],
+                "companySize": "<20",
+                "companyType": "other",
+                "role": "it",
+                "reportedSource": "youtube"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "vSTSXvCp1TdpkJhY",
+                "userActivatedAt": 1748174400163,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1764302866737
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-01-12",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-01-12T17:30:36.998Z",
+      "createdAt": "2026-01-12T17:30:36.998Z",
+      "id": "mAkyKogKtWsVdpO8",
+      "name": "recruitment-agents"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-01-11T18:07:58.000Z",
+    "createdAt": "2026-01-11T18:07:50.891Z",
+    "versionId": "bff9ba75-a165-4bec-a189-f5218e5e14cd",
+    "workflowId": "Yz7IPfS0HoAEHwUj",
+    "nodes": [
+      {
+        "parameters": {
+          "documentId": {
+            "__rl": true,
+            "value": "1tEONuWJRWa64DL2me7JxPDRvi22Lns16RiKkr7zV5Vw",
+            "mode": "list",
+            "cachedResultName": "Job_Openings_DB",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tEONuWJRWa64DL2me7JxPDRvi22Lns16RiKkr7zV5Vw/edit?usp=drivesdk"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "gid=0",
+            "mode": "list",
+            "cachedResultName": "Sheet1",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tEONuWJRWa64DL2me7JxPDRvi22Lns16RiKkr7zV5Vw/edit#gid=0"
+          },
+          "filtersUI": {
+            "values": [
+              {
+                "lookupColumn": "Job_Title",
+                "lookupValue": "={{ $('Receive Application').item.json.body.job_role }}"
+              },
+              {
+                "lookupColumn": "Status",
+                "lookupValue": "Active"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "position": [
+          -336,
+          -352
+        ],
+        "id": "66bbb32e-d1bd-4e28-ade5-6d0d742c8a24",
+        "name": "Fetch Job Description",
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "YyW1gcId8nYqGi8s",
+            "name": "Google Sheets adeysarkar77"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "pdf",
+          "binaryPropertyName": "resume",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.extractFromFile",
+        "typeVersion": 1.1,
+        "position": [
+          -576,
+          -352
+        ],
+        "id": "44dafc96-d3d9-4ae2-ac02-990793f82297",
+        "name": "Extraxt Text from Resume"
+      },
+      {
+        "parameters": {
+          "modelId": {
+            "__rl": true,
+            "value": "gpt-4o",
+            "mode": "list",
+            "cachedResultName": "GPT-4O"
+          },
+          "responses": {
+            "values": [
+              {
+                "content": "=You are an expert Technical Recruiter with 20 years of experience. You evaluate candidates using \"Semantic Matching\" rather than simple \"Keyword Matching.\"\n\nYOUR TASK:\nAnalyze the provided RESUME text against the JOB DESCRIPTION (JD) to extract candidate details and calculate a precise **ATS Compatibility Score (0-100)**.\n\nJOB DESCRIPTION:\n\"\"\"\n{{ $json.Job_Description }}\n\"\"\"\n\nRESUME TEXT:\n\"\"\"\n{{ $('Extraxt Text from Resume').item.json.text }}\n\"\"\"\n\nSCORING GUIDELINES (Total 100):\n1. **Technical Skills (45 Points):**\n   - **Crucial:** Look for *component skills* even if the exact acronym is missing.\n   - *Example:* If JD asks for \"MEAN Stack\", and Resume lists \"MongoDB\", \"Express\", \"Angular\", and \"Node.js\" separately -> **Award Full Points**.\n   - *Example:* If JD asks for \".NET Core\" and Resume has \".NET Framework\" -> **Award Partial Points** (do not zero out).\n2. **Experience & Seniority (30 Points):**\n   - Compare \"Years of Experience\" vs \"Required Years\". (Allow a 10% margin).\n   - Does the candidate show the required seniority (e.g., Leading teams, Architecture)?\n3. **Nice-to-Haves & Tools (15 Points):**\n   - Look for secondary tools mentioned in the JD (e.g., AWS, Git, Jira/ADO).\n4. **Soft Skills & Formatting (10 Points):**\n   - Communication skills, clear structure, Agile methodologies.\n\nOUTPUT FORMAT:\nReturn ONLY a raw JSON object. Do not use Markdown formatting (no ```json).\n{\n  \"candidate_name\": \"Name extracted from resume\",\n  \"email\": \"Extracted email address\",\n  \"phone\": \"Extracted phone number\",\n  \"location\": \"City, State, or Country extracted from resume\",\n  \"ats_score\": 0,\n  \"summary\": \"1 sentence executive summary of the candidate\",\n  \"missing_skills\": [\"List only truly missing skills\"],\n  \"reasoning\": \"Explain the score calculation. Explicitly mention if you found synonyms (e.g., 'Found Angular+Node instead of MEAN').\"\n}"
+              }
+            ]
+          },
+          "builtInTools": {},
+          "options": {
+            "textFormat": {
+              "textOptions": {
+                "type": "json_object"
+              }
+            }
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.openAi",
+        "typeVersion": 2.1,
+        "position": [
+          80,
+          -352
+        ],
+        "id": "b2f001e9-0402-43e0-a499-d2c16d163bbb",
+        "name": "Screen Resume",
+        "credentials": {
+          "openAiApi": {
+            "id": "JowygiMoSY8l1sx0",
+            "name": "OpenAi account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// --- CONFIGURATION ---\nconst CUTOFF_SCORE = 70;\n// ---------------------\n\nconst allowedKeys = [\n  \"candidate_name\",\n  \"email\",\n  \"phone\",\n  \"location\",\n  \"ats_score\",\n  \"status\",\n  \"summary\",\n  \"missing_skills\",\n  \"reasoning\",\n];\n\nfor (const item of $input.all()) {\n  let aiData = {};\n  // 1. NAVIGATE TO THE CORRECT DATA PATH\n  // Based on your screenshot, the data is at: content -> content[0] -> text\n  try {\n    if (\n      item.json.output &&\n      item.json.output.length > 0 &&\n      item.json.output[0].content &&\n      item.json.output[0].content.length > 0 &&\n      item.json.output[0].content[0] &&\n      item.json.output[0].content[0].text\n    ) {\n      aiData = item.json.output[0].content[0].text;\n    }\n    // Fallback: Check if it's directly at the root (just in case)\n    else if (item.json.ats_score !== undefined) {\n      aiData = item.json;\n    }\n  } catch (error) {\n    aiData = { reasoning: \"Error navigating JSON structure: \" + error.message };\n  }\n\n  // 2. CALCULATE STATUS\n  // Use '0' if score is missing\n  const score = aiData.ats_score || 0;\n\n  if (score >= CUTOFF_SCORE) {\n    aiData.status = \"Qualified\";\n  } else {\n    aiData.status = \"Rejected\";\n  }\n\n  // 3. FILTER & REBUILD OUTPUT\n  const filteredJson = {};\n  for (const key of allowedKeys) {\n    // Check aiData (the found object), not item.json\n    if (aiData.hasOwnProperty(key)) {\n      filteredJson[key] = aiData[key];\n    } else {\n      filteredJson[key] = null;\n    }\n  }\n\n  // 4. Generate Unique ID\n  // Generate a simple random ID (e.g., Applicant_8392)\n  const uniqueId = \"Applicant_\" + Math.floor(Math.random() * 10000);\n  filteredJson[\"Unique_Id\"] = uniqueId\n\n  // Update the item\n  item.json = filteredJson;\n}\n\nreturn $input.all();\n"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          496,
+          -352
+        ],
+        "id": "357c4b71-a3e4-440b-8cf1-9bf3437cef8e",
+        "name": "Set Status"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 3
+            },
+            "conditions": [
+              {
+                "id": "dbe68093-b383-43f6-9efc-8f4af181805a",
+                "leftValue": "={{ $json.status }}",
+                "rightValue": "Qualified",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          768,
+          -352
+        ],
+        "id": "a28de7f6-63b0-4104-835e-ce2ca2d10196",
+        "name": "Qualification Router"
+      },
+      {
+        "parameters": {
+          "operation": "append",
+          "documentId": {
+            "__rl": true,
+            "value": "1VX-DANXMHnMT-VPwzPJ1EJ2huS-HAUr7ew5PlN308DQ",
+            "mode": "list",
+            "cachedResultName": "Candidates_DB",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VX-DANXMHnMT-VPwzPJ1EJ2huS-HAUr7ew5PlN308DQ/edit?usp=drivesdk"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "gid=0",
+            "mode": "list",
+            "cachedResultName": "Sheet1",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VX-DANXMHnMT-VPwzPJ1EJ2huS-HAUr7ew5PlN308DQ/edit#gid=0"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "Unique_Id": "={{ $('Merge').item.json.Unique_Id }}",
+              "Timestamp": "={{ $now.format('yyyy-MM-dd hh:mm a') }}",
+              "Candidate_Name": "={{ $('Merge').item.json.candidate_name }}",
+              "Applied_For": "={{ $('Fetch Job Description').item.json.Job_Title }}",
+              "Email": "={{ $('Merge').item.json.email }}",
+              "Phone": "={{ $('Merge').item.json.phone }}",
+              "Location": "={{ $('Merge').item.json.location }}",
+              "Resume_Summary": "={{ $('Merge').item.json.summary }}",
+              "ATS_Score": "={{ $('Merge').item.json.ats_score }}",
+              "Screening_Status": "={{ $('Merge').item.json.status }}",
+              "AI_Analysis": "={{ $('Merge').item.json.reasoning }}",
+              "Resume_Link": "={{ $json.webViewLink }}"
+            },
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "Unique_Id",
+                "displayName": "Unique_Id",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Timestamp",
+                "displayName": "Timestamp",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Candidate_Name",
+                "displayName": "Candidate_Name",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Applied_For",
+                "displayName": "Applied_For",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Email",
+                "displayName": "Email",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Phone",
+                "displayName": "Phone",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Location",
+                "displayName": "Location",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Resume_Summary",
+                "displayName": "Resume_Summary",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "ATS_Score",
+                "displayName": "ATS_Score",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Screening_Status",
+                "displayName": "Screening_Status",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "AI_Analysis",
+                "displayName": "AI_Analysis",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Resume_Link",
+                "displayName": "Resume_Link",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "position": [
+          592,
+          48
+        ],
+        "id": "8d95a805-cd4f-4942-84ad-8ab2f8fda85c",
+        "name": "Append row in sheet",
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "YyW1gcId8nYqGi8s",
+            "name": "Google Sheets adeysarkar77"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "mode": "combine",
+          "combineBy": "combineByPosition",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.2,
+        "position": [
+          -352,
+          48
+        ],
+        "id": "4ae926b2-87e0-4b86-8b90-589d5c96c9f5",
+        "name": "Merge"
+      },
+      {
+        "parameters": {
+          "inputDataFieldName": "resume",
+          "name": "={{ $json.Unique_Id }}.pdf",
+          "driveId": {
+            "__rl": true,
+            "value": "My Drive",
+            "mode": "list",
+            "cachedResultName": "My Drive",
+            "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+          },
+          "folderId": {
+            "__rl": true,
+            "value": "16zpxlDqxzxLUGTgm3Mf14d7NtpDKdriO",
+            "mode": "list",
+            "cachedResultName": "qualified_resume",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/16zpxlDqxzxLUGTgm3Mf14d7NtpDKdriO"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleDrive",
+        "typeVersion": 3,
+        "position": [
+          144,
+          48
+        ],
+        "id": "5d72ed50-cb38-42f1-beb4-eea7776dc845",
+        "name": "Upload Resume",
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "kYo9GOt5Ay7Vq313",
+            "name": "Google Drive account adeysarkar77"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "content": "## 📥 Intake & Preparation\n**1. Job Application Portal:**\n   - Accepts Candidate Resume (PDF).\n   - Captures Selected Job Role.\n\n**2. Data Extraction:**\n   - Converts PDF binary to text.\n   - Fetches the exact Job Description from the DB for comparison.",
+          "height": 384,
+          "width": 816,
+          "color": 5
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -912,
+          -592
+        ],
+        "typeVersion": 1,
+        "id": "47cc32b9-435d-4d25-a4de-0c235dff7dbb",
+        "name": "Sticky Note"
+      },
+      {
+        "parameters": {
+          "content": "## 🧠 AI Screening Engine\n**1. Analysis (GPT-4o / Gemini):**\n   - Performs semantic matching.\n   - Extracts Name, Email, Phone, Location.\n   - Calculates ATS Score (0-100).\n\n**2. Standardization:**\n   - Cleans JSON output.\n   - Applies Cutoff Logic (Score >= 70).\n   - Assigns final status: `Qualified` or `Rejected`.",
+          "height": 384,
+          "width": 688,
+          "color": 2
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -80,
+          -592
+        ],
+        "typeVersion": 1,
+        "id": "dc97f67f-4235-418d-9ab4-1e1b1226520a",
+        "name": "Sticky Note1"
+      },
+      {
+        "parameters": {
+          "content": "## 🔀 Decision Logic\n**Router:**\n   - **True Path:** Candidate is Qualified. Proceed to scheduling.\n   - **False Path:** Candidate is Rejected. Proceed to rejection email (future step).",
+          "height": 384,
+          "width": 400,
+          "color": 3
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          624,
+          -592
+        ],
+        "typeVersion": 1,
+        "id": "c04bcd3f-c3b7-4769-8526-d43c556340c4",
+        "name": "Sticky Note2"
+      },
+      {
+        "parameters": {
+          "content": "## 💾 Database Operations\n**1. File Storage:**\n   - Uploads the original PDF Resume to Google Drive.\n\n**2. Candidate Logging:**\n   - Appends all extracted data + ATS Score + Status to the `Candidates_DB` Google Sheet.",
+          "height": 368,
+          "width": 1232,
+          "color": 4
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -384,
+          -144
+        ],
+        "typeVersion": 1,
+        "id": "81b1d943-4578-49aa-ad2b-65b5f5c5e48a",
+        "name": "Sticky Note3"
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "apply",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          -848,
+          -352
+        ],
+        "id": "7b1acbd5-5d23-4959-b762-44acab701b9b",
+        "name": "Receive Application",
+        "webhookId": "6e8e4a41-2587-4556-8b62-026b8334cdb3"
+      },
+      {
+        "parameters": {
+          "path": "get-jobs",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          -688,
+          496
+        ],
+        "id": "351b0769-234f-4809-8837-a8a5f9440e78",
+        "name": "Job Role Request",
+        "webhookId": "a6d6f24e-09c9-44c3-9142-13cfe8bd5145"
+      },
+      {
+        "parameters": {
+          "documentId": {
+            "__rl": true,
+            "value": "1tEONuWJRWa64DL2me7JxPDRvi22Lns16RiKkr7zV5Vw",
+            "mode": "list",
+            "cachedResultName": "Job_Openings_DB",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tEONuWJRWa64DL2me7JxPDRvi22Lns16RiKkr7zV5Vw/edit?usp=drivesdk"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "gid=0",
+            "mode": "list",
+            "cachedResultName": "Sheet1",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tEONuWJRWa64DL2me7JxPDRvi22Lns16RiKkr7zV5Vw/edit#gid=0"
+          },
+          "filtersUI": {
+            "values": [
+              {
+                "lookupColumn": "Status",
+                "lookupValue": "Active"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "position": [
+          -480,
+          496
+        ],
+        "id": "22c8096b-2e1d-4156-825f-680e7a90ca63",
+        "name": "Geat Active Jobs",
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "YyW1gcId8nYqGi8s",
+            "name": "Google Sheets adeysarkar77"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Extract just the Job Titles into a simple array\nconst roles = $input.all().map(item => item.json.Job_Title);\n\n// Return it as a JSON object\nreturn { json: { roles: roles } };"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -272,
+          496
+        ],
+        "id": "b80fae9f-b322-4b4d-8b85-6bb14738d10e",
+        "name": "The Cleaner"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [
+          -64,
+          496
+        ],
+        "id": "a0ee0a8a-768a-497a-a86c-682ef6ea48cb",
+        "name": "Sens Job Roles"
+      }
+    ],
+    "connections": {
+      "Fetch Job Description": {
+        "main": [
+          [
+            {
+              "node": "Screen Resume",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extraxt Text from Resume": {
+        "main": [
+          [
+            {
+              "node": "Fetch Job Description",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Screen Resume": {
+        "main": [
+          [
+            {
+              "node": "Set Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set Status": {
+        "main": [
+          [
+            {
+              "node": "Qualification Router",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Qualification Router": {
+        "main": [
+          [
+            {
+              "node": "Merge",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge": {
+        "main": [
+          [
+            {
+              "node": "Upload Resume",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upload Resume": {
+        "main": [
+          [
+            {
+              "node": "Append row in sheet",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Receive Application": {
+        "main": [
+          [
+            {
+              "node": "Extraxt Text from Resume",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Merge",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Job Role Request": {
+        "main": [
+          [
+            {
+              "node": "Geat Active Jobs",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Geat Active Jobs": {
+        "main": [
+          [
+            {
+              "node": "The Cleaner",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "The Cleaner": {
+        "main": [
+          [
+            {
+              "node": "Sens Job Roles",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Argha Dey Sarkar",
+    "name": "Version bff9ba75",
+    "description": "",
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-01-11T18:07:58.547Z",
+        "id": 55,
+        "workflowId": "Yz7IPfS0HoAEHwUj",
+        "versionId": "bff9ba75-a165-4bec-a189-f5218e5e14cd",
+        "event": "activated",
+        "userId": "efbcfcc6-1d00-4a8e-ae51-9e0e1b58d7e9"
+      }
+    ]
+  }
+}
