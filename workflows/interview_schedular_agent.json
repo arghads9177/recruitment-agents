@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-12T18:13:22.772Z",
+  "updatedAt": "2026-01-14T12:46:30.958Z",
   "createdAt": "2026-01-12T04:25:57.909Z",
   "id": "dAZkAKCmNTSGrll3",
   "name": "interview-schedular-agent",
@@ -21,7 +21,7 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.3,
       "position": [
-        -624,
+        -1024,
         -336
       ],
       "id": "522bc8ad-e25f-42b8-b25f-91ca29189ac8",
@@ -55,7 +55,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -208,
+        -320,
         -336
       ],
       "id": "c2e44bf4-0e37-4752-8c13-3c08eb32cdb1",
@@ -90,7 +90,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        -416,
+        -640,
         -336
       ],
       "id": "1283736b-3809-4ed1-a213-299851918e7c",
@@ -278,7 +278,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        288,
+        336,
         -352
       ],
       "id": "c59437b2-c05d-4f07-a97f-31212e9ab30f",
@@ -289,23 +289,6 @@
           "name": "Google Sheets adeysarkar77"
         }
       }
-    },
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "call-tool",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2.1,
-      "position": [
-        -624,
-        160
-      ],
-      "id": "5c87e38d-f30d-416a-9018-221f227f6ac9",
-      "name": "Webhook",
-      "webhookId": "31dffbe0-38cc-4131-8735-45e55a7c27fd"
     },
     {
       "parameters": {
@@ -336,7 +319,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        80,
+        0,
         -352
       ],
       "id": "e3211811-7d01-482a-b463-98779252941b",
@@ -407,7 +390,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        480,
+        640,
         -352
       ],
       "id": "fc20e9f5-ff57-4a73-919f-3d074c452588",
@@ -425,7 +408,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        688,
+        1040,
         -352
       ],
       "id": "b7f935eb-01ef-43a3-9254-c2c63acd0356",
@@ -433,444 +416,130 @@
     },
     {
       "parameters": {
-        "rules": {
-          "values": [
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "strict",
-                  "version": 3
-                },
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.body.name }}",
-                    "rightValue": "update_candidate_status",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "id": "6a2241b1-a5b6-4625-a09f-15ecb3a30d5d"
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "Update Status"
-            },
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "strict",
-                  "version": 3
-                },
-                "conditions": [
-                  {
-                    "id": "94884935-9377-4dc3-a27e-478654ccb08f",
-                    "leftValue": "={{ $json.body.name }}",
-                    "rightValue": "check_slot_availability",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals",
-                      "name": "filter.operator.equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "Check Availability"
-            },
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "strict",
-                  "version": 3
-                },
-                "conditions": [
-                  {
-                    "id": "9d519340-34a2-4449-abf5-5378552f6629",
-                    "leftValue": "={{ $json.body.name }}",
-                    "rightValue": "book_interview_slot",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals",
-                      "name": "filter.operator.equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "Book Slot"
-            }
-          ]
-        },
-        "options": {}
+        "content": "# 📌 Workflow Documentation: \"The Dialer\" (Phase 1)\n\n",
+        "height": 80,
+        "width": 912,
+        "color": 7
       },
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1056,
+        -784
+      ],
+      "typeVersion": 1,
+      "id": "ab5cebad-6ed6-4fb0-857b-74cbadf71c6d",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "### 1. ⏱️ Trigger: Candidate DB Watcher\n**Type:** Schedule Trigger\n**Purpose:** Wakes up the workflow periodically (e.g., every 15 or 30 mins).\n**Note:** Ensure this interval isn't too short to prevent API rate limits, but frequent enough to call leads while they are fresh.",
+        "height": 432,
+        "width": 320,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1072,
+        -592
+      ],
+      "typeVersion": 1,
+      "id": "694b36aa-bbd8-433e-9dfb-63660ecda295",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "### 2. 📄 Node: Get Qualified\n**Type:** Google Sheets (Get Many Rows)\n**Purpose:** Fetches the \"Raw Lead List\".\n**Logic:** Looks for rows in `Candidates_DB` where:\n- `Status` is \"Qualified\"\n- `Call_Status` is Empty (or \"Pending\")",
+        "height": 432,
+        "width": 304,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -736,
+        -592
+      ],
+      "typeVersion": 1,
+      "id": "ced65c88-fe99-4e15-a3e4-baf3af8331c1",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "### 3. 🚦 Node: Filter Uncalled\n**Type:** Filter / Switch\n**Purpose:** The \"Safety Gate\".\n**Logic:** Double-checks that the candidate hasn't been called yet.\n- Pass: If `Call_Status` is Empty.\n- Stop: If `Call_Status` contains \"Called\", \"Queued\", or \"Interested\".",
+        "height": 432,
+        "width": 304,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
       "position": [
         -416,
-        144
+        -592
       ],
-      "id": "7d55be39-e6af-4d64-9e4b-8383f8ebed97",
-      "name": "The Tool Router"
+      "typeVersion": 1,
+      "id": "fb9b8aa1-8ba4-4524-9183-5fbfb611870a",
+      "name": "Sticky Note3"
     },
     {
       "parameters": {
-        "documentId": {
-          "__rl": true,
-          "value": "1VX-DANXMHnMT-VPwzPJ1EJ2huS-HAUr7ew5PlN308DQ",
-          "mode": "list",
-          "cachedResultName": "Candidates_DB",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VX-DANXMHnMT-VPwzPJ1EJ2huS-HAUr7ew5PlN308DQ/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "gid=0",
-          "mode": "list",
-          "cachedResultName": "Sheet1",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VX-DANXMHnMT-VPwzPJ1EJ2huS-HAUr7ew5PlN308DQ/edit#gid=0"
-        },
-        "filtersUI": {
-          "values": [
-            {
-              "lookupColumn": "Unique_Id",
-              "lookupValue": "={{ $json.body.args.unique_id }}"
-            }
-          ]
-        },
-        "options": {}
+        "content": "### 4. 📂 Node: Get Job Information\n**Type:** Google Sheets (Get Row)\n**Purpose:** Context Enrichment.\n**Logic:** Uses the `Applied_For` column (e.g., \"Node Dev\") to look up details in a *separate* \"Jobs\" sheet (Location, Salary Range, JD Summary).\n**Benefit:** Gives the AI specific data about the role to answer candidate questions accurately.",
+        "height": 432,
+        "width": 304,
+        "color": 4
       },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
+      "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -48,
-        -16
+        -96,
+        -592
       ],
-      "id": "cfe0287c-8db0-44bb-9ba2-23bdf5863018",
-      "name": "Get Candidate Info",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "YyW1gcId8nYqGi8s",
-          "name": "Google Sheets adeysarkar77"
-        }
-      }
+      "typeVersion": 1,
+      "id": "f235afce-60af-4774-a975-4da1b4390119",
+      "name": "Sticky Note4"
     },
     {
       "parameters": {
-        "operation": "update",
-        "documentId": {
-          "__rl": true,
-          "value": "1VX-DANXMHnMT-VPwzPJ1EJ2huS-HAUr7ew5PlN308DQ",
-          "mode": "list",
-          "cachedResultName": "Candidates_DB",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VX-DANXMHnMT-VPwzPJ1EJ2huS-HAUr7ew5PlN308DQ/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "gid=0",
-          "mode": "list",
-          "cachedResultName": "Sheet1",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VX-DANXMHnMT-VPwzPJ1EJ2huS-HAUr7ew5PlN308DQ/edit#gid=0"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "row_number": "={{ $json.row_number }}",
-            "Call_Status": "={{ $('Webhook').item.json.body.args.status }}",
-            "Non_Schedule_Reason": "={{ $('Webhook').item.json.body.args.reason }}"
-          },
-          "matchingColumns": [
-            "row_number"
-          ],
-          "schema": [
-            {
-              "id": "Unique_Id",
-              "displayName": "Unique_Id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "Timestamp",
-              "displayName": "Timestamp",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "Candidate_Name",
-              "displayName": "Candidate_Name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "Applied_For",
-              "displayName": "Applied_For",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "Email",
-              "displayName": "Email",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "Phone",
-              "displayName": "Phone",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "Location",
-              "displayName": "Location",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "Resume_Summary",
-              "displayName": "Resume_Summary",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "ATS_Score",
-              "displayName": "ATS_Score",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "Screening_Status",
-              "displayName": "Screening_Status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "AI_Analysis",
-              "displayName": "AI_Analysis",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "Resume_Link",
-              "displayName": "Resume_Link",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "Call_Status",
-              "displayName": "Call_Status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Notice_Period",
-              "displayName": "Notice_Period",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "Current_CTC",
-              "displayName": "Current_CTC",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "Expected_CTC",
-              "displayName": "Expected_CTC",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "Interview_Time",
-              "displayName": "Interview_Time",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "Non_Schedule_Reason",
-              "displayName": "Non_Schedule_Reason",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "row_number",
-              "displayName": "row_number",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "number",
-              "canBeUsedToMatch": true,
-              "readOnly": true,
-              "removed": false
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
+        "content": "### 5. 🔒 Node: Set Queued\n**Type:** Google Sheets (Update Row)\n**Purpose:** The \"Locking Mechanism\".\n**Logic:** IMMEDIATELY updates the candidate's `Call_Status` to **\"Queued\"**.\n**Why:** Prevents the workflow from picking up the same person again in the next run if the call is still in progress.",
+        "height": 432,
+        "width": 304,
+        "color": 6
       },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
+      "type": "n8n-nodes-base.stickyNote",
       "position": [
-        160,
-        -16
+        224,
+        -592
       ],
-      "id": "bea4482a-14f5-48ee-9e86-0873fe354a69",
-      "name": "Update Call Status",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "YyW1gcId8nYqGi8s",
-          "name": "Google Sheets adeysarkar77"
-        }
-      }
+      "typeVersion": 1,
+      "id": "d5a59361-99fe-4f6a-b486-d689913b85cd",
+      "name": "Sticky Note5"
     },
     {
       "parameters": {
-        "respondWith": "json",
-        "responseBody": "{\n  \"result\": \"success\"\n}",
-        "options": {}
+        "content": "### 6. 🛠️ Node: Set Up Call Information\n**Type:** Edit Fields (Set)\n**Purpose:** Data Preparation.\n**Logic:**\n- Formats Phone Number to E.164 (adds `+91` or country code).\n- Maps variables for the AI: `candidate_name`, `job_role`, `unique_id`, `current_time`.\n- Sets the `agent_id` and `from_number`.",
+        "height": 432,
+        "width": 304
       },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
+      "type": "n8n-nodes-base.stickyNote",
       "position": [
-        368,
-        -16
+        544,
+        -592
       ],
-      "id": "4b320f11-7660-4418-9482-213c5498cf49",
-      "name": "Respond to Tool Call"
+      "typeVersion": 1,
+      "id": "e670484a-5930-4054-beec-6d30aae6a442",
+      "name": "Sticky Note6"
     },
     {
       "parameters": {
-        "jsCode": "// 1. Get the requested slot\nconst requestedSlot = $input.first().json.body.args.requested_slot;\nconst dateObj = new Date(requestedSlot);\n\n// 2. Define IST Offset (India is UTC + 5 hours 30 minutes)\n// 5.5 hours * 60 mins * 60 seconds * 1000 milliseconds\nconst istOffsetMs = 5.5 * 60 * 60 * 1000; \n\n// 3. Shift the time to \"India Time\" manually\nconst dateInIST = new Date(dateObj.getTime() + istOffsetMs);\n\n// 4. Clamp to Start of Day (00:00:00) in India Time\ndateInIST.setUTCHours(0, 0, 0, 0);\n\n// 5. Shift back to UTC to get the \"Search Window Start\"\nconst windowMin = new Date(dateInIST.getTime() - istOffsetMs);\n\n// 6. Calculate End of Day (add 23h 59m 59s 999ms)\n// We add \"almost\" 24 hours to the windowMin\nconst windowMax = new Date(windowMin.getTime() + (24 * 60 * 60 * 1000) - 1);\n\nreturn {\n  json: {\n    requested_slot: requestedSlot,\n    window_min: windowMin.toISOString(),\n    window_max: windowMax.toISOString()\n  }\n};"
+        "content": "### 7. 📞 Node: Initiate Call\n**Type:** HTTP Request\n**Purpose:** The Action.\n**Endpoint:** `POST https://api.retellai.com/v2/create-phone-call`\n**Auth:** Header Auth (`Bearer <YOUR_API_KEY>`)\n**Body:** Sends the JSON payload prepared in the previous node to trigger the actual phone call.",
+        "height": 432,
+        "width": 352,
+        "color": 4
       },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -64,
-        160
+        880,
+        -592
       ],
-      "id": "3e15cdbd-72ca-41e0-83b0-4f00bf50ad20",
-      "name": "Prepare the Time Window"
-    },
-    {
-      "parameters": {
-        "operation": "getAll",
-        "calendar": {
-          "__rl": true,
-          "value": "78534b3793533d60a774510c9dec6d82fdaa2477e4fbeda9282510fef145a232@group.calendar.google.com",
-          "mode": "list",
-          "cachedResultName": "Recruitment Calendar"
-        },
-        "timeMin": "={{ $json.window_min.toDateTime() }}",
-        "timeMax": "={{ $json.window_max.toDateTime() }}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.googleCalendar",
-      "typeVersion": 1.3,
-      "position": [
-        144,
-        160
-      ],
-      "id": "25afa273-3b50-46e0-b787-231bb31e0501",
-      "name": "Get many events",
-      "alwaysOutputData": true,
-      "credentials": {
-        "googleCalendarOAuth2Api": {
-          "id": "N2zOq9qUSQq253tI",
-          "name": "Google Calendar account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "// 1. Get Inputs\n// Note: We access the requested_slot from the specific previous node.\n// MAKE SURE your previous Code Node is named \"Prepare the Time Window\"\n// or change the name inside $('...') below to match your actual node name.\nconst requestedSlotStr = $('Prepare the Time Window').first().json.requested_slot;\nconst events = $input.all().map(item => item.json);\n\n// 2. Define the Requested Slot (Start & End)\nconst reqStart = new Date(requestedSlotStr);\nconst reqEnd = new Date(reqStart.getTime() + 30 * 60000); // Add 30 mins duration\n\n// 3. Logic: Check for Overlaps\nlet status = \"AVAILABLE\";\n\nfor (const event of events) {\n  // Skip if event has no time\n  if (!event.start || !event.end) continue;\n\n  // Handle Google's \"dateTime\" (timed events) vs \"date\" (all-day events)\n  const eStart = new Date(event.start.dateTime || event.start.date);\n  const eEnd = new Date(event.end.dateTime || event.end.date);\n\n  // Intersection Formula: (StartA < EndB) and (EndA > StartB)\n  if (reqStart < eEnd && reqEnd > eStart) {\n    status = \"UNAVAILABLE\";\n    break;\n  }\n}\n\n// 4. Logic: Find Alternatives (Only if UNAVAILABLE)\nlet alternatives = [];\nif (status === \"UNAVAILABLE\") {\n    \n    // Set search start time to 10:00 AM IST of the requested day\n    // 10:00 AM IST is 04:30 UTC\n    let searchStart = new Date(reqStart);\n    searchStart.setUTCHours(4, 30, 0, 0); // 04:30 UTC\n\n    // Scan for slots until 5:00 PM IST (11:30 UTC)\n    // We try up to 8 times (hourly increments)\n    for (let i = 0; i < 8; i++) {\n        // Stop if we found 3 slots\n        if (alternatives.length >= 3) break;\n\n        // Stop if we go past 5 PM IST (11:30 UTC)\n        // 11 * 60 + 30 = 690 minutes\n        const currentMinutesUTC = searchStart.getUTCHours() * 60 + searchStart.getUTCMinutes();\n        if (currentMinutesUTC > 690) break;\n\n        const searchEnd = new Date(searchStart.getTime() + 30 * 60000);\n\n        // Check collision for this potential slot\n        let isFree = true;\n        for (const event of events) {\n            const eStart = new Date(event.start.dateTime || event.start.date);\n            const eEnd = new Date(event.end.dateTime || event.end.date);\n            if (searchStart < eEnd && searchEnd > eStart) {\n                isFree = false;\n                break;\n            }\n        }\n\n        // If free and in the future, add to list\n        if (isFree && searchStart > new Date()) {\n            alternatives.push(searchStart.toISOString());\n        }\n\n        // Jump forward 1 hour\n        searchStart = new Date(searchStart.getTime() + 60 * 60000);\n    }\n}\n\n// 5. Generate Text for Voice Agent\nlet resultText = \"Slot is available.\";\n\nif (status === \"UNAVAILABLE\") {\n    // Format the alternative dates into readable text (e.g. \"10:30 AM, 2:30 PM\")\n    // We manually convert UTC to IST for the display text\n    const altTexts = alternatives.map(iso => {\n        const d = new Date(iso);\n        // Add 5.5 hours to get India time\n        const dIST = new Date(d.getTime() + (5.5 * 60 * 60 * 1000));\n        \n        let hours = dIST.getUTCHours();\n        const minutes = dIST.getUTCMinutes();\n        const ampm = hours >= 12 ? 'PM' : 'AM';\n        \n        hours = hours % 12;\n        hours = hours ? hours : 12; // \"0\" hours should be \"12\"\n        const minStr = minutes < 10 ? '0' + minutes : minutes;\n        \n        return `${hours}:${minStr} ${ampm}`;\n    });\n\n    if (altTexts.length > 0) {\n        resultText = `That specific time is taken. However, I have openings at ${altTexts.join(\", \")}. Do any of those work?`;\n    } else {\n        resultText = \"That time is taken and I don't see any other openings today. How about tomorrow?\";\n    }\n}\n\n// 6. Return\nreturn {\n    json: {\n        status: status,\n        result: resultText,\n        requested_slot: requestedSlotStr\n    }\n};"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        400,
-        160
-      ],
-      "id": "d10a088d-e9f3-4ab9-9688-0309e5437862",
-      "name": "Analyze Availability"
+      "typeVersion": 1,
+      "id": "4eab03c4-6c02-4d9e-97b9-8044aa592201",
+      "name": "Sticky Note7"
     }
   ],
   "connections": {
@@ -939,94 +608,25 @@
           }
         ]
       ]
-    },
-    "Webhook": {
-      "main": [
-        [
-          {
-            "node": "The Tool Router",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "The Tool Router": {
-      "main": [
-        [
-          {
-            "node": "Get Candidate Info",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Prepare the Time Window",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Candidate Info": {
-      "main": [
-        [
-          {
-            "node": "Update Call Status",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update Call Status": {
-      "main": [
-        [
-          {
-            "node": "Respond to Tool Call",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Prepare the Time Window": {
-      "main": [
-        [
-          {
-            "node": "Get many events",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get many events": {
-      "main": [
-        [
-          {
-            "node": "Analyze Availability",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
   "settings": {
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "staticData": null,
+  "staticData": {
+    "node:Cadidate DB Watcher": {
+      "recurrenceRules": []
+    }
+  },
   "meta": {
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "948e3224-f2ba-4c2e-8ede-75c395d29e79",
+  "versionId": "b3eec615-24f3-46e7-afd7-fe177b5d66bc",
   "activeVersionId": null,
-  "versionCounter": 26,
-  "triggerCount": 0,
+  "versionCounter": 38,
+  "triggerCount": 2,
   "shared": [
     {
       "updatedAt": "2026-01-12T04:25:57.927Z",
@@ -1050,7 +650,7 @@
             "userId": "efbcfcc6-1d00-4a8e-ae51-9e0e1b58d7e9",
             "projectId": "nPULQSgjz9YKHEZ2",
             "user": {
-              "updatedAt": "2026-01-12T04:00:24.000Z",
+              "updatedAt": "2026-01-15T04:06:52.000Z",
               "createdAt": "2025-05-25T07:38:18.466Z",
               "id": "efbcfcc6-1d00-4a8e-ae51-9e0e1b58d7e9",
               "email": "email2argha@gmail.com",
@@ -1084,7 +684,7 @@
               },
               "disabled": false,
               "mfaEnabled": false,
-              "lastActiveAt": "2026-01-12",
+              "lastActiveAt": "2026-01-15",
               "isPending": false
             }
           }

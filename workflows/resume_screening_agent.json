@@ -750,7 +750,7 @@
             "userId": "efbcfcc6-1d00-4a8e-ae51-9e0e1b58d7e9",
             "projectId": "nPULQSgjz9YKHEZ2",
             "user": {
-              "updatedAt": "2026-01-12T04:00:24.000Z",
+              "updatedAt": "2026-01-15T04:06:52.000Z",
               "createdAt": "2025-05-25T07:38:18.466Z",
               "id": "efbcfcc6-1d00-4a8e-ae51-9e0e1b58d7e9",
               "email": "email2argha@gmail.com",
@@ -784,7 +784,7 @@
               },
               "disabled": false,
               "mfaEnabled": false,
-              "lastActiveAt": "2026-01-12",
+              "lastActiveAt": "2026-01-15",
               "isPending": false
             }
           }
